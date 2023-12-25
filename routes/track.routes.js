@@ -1,7 +1,11 @@
 const express = require("express");
-const multer = require("multer");
-const Track = require("../models/track.model")
 const trackrouter = express.Router();
+const Track = require("../models/track.model");
+const multer = require("multer");
+const fs = require("fs");
+const mm = require("music-metadata");
+const rangeParser = require("range-parser");
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, "uploads/");
@@ -21,7 +25,9 @@ trackrouter.post("/create", upload.single("audioFile"), async (req, res) => {
     if (!req.file) {
       return res.status(400).json({ message: "Audio file is required." });
     }
+
     const audioFilePath = req.file.path;
+
     const track = new Track({
       title,
       artist,
@@ -31,15 +37,18 @@ trackrouter.post("/create", upload.single("audioFile"), async (req, res) => {
 
     const savedTrack = await track.save();
 
-    res.status(201).json({ message: "Track created successfully", track: savedTrack });
+    res
+      .status(201)
+      .json({ message: "Track created successfully", track: savedTrack });
   } catch (error) {
     console.error(error);
-    res.status(500).json({ message: "Track creation failed. Please try again." });
+    res
+      .status(500)
+      .json({ message: "Track creation failed. Please try again." });
   }
 });
 
 // Route for getting a list of all tracks
-
 trackrouter.get("/list", async (req, res) => {
   try {
     const tracks = await Track.find();
@@ -50,13 +59,16 @@ trackrouter.get("/list", async (req, res) => {
 });
 
 // Route for getting details of a specific track
-trackrouter.get("/detail/:trackId", async (res, req) => {
+trackrouter.get("/detail/:trackId", async (req, res) => {
   const { trackId } = req.params;
+
   try {
     const track = await Track.findById(trackId);
+
     if (!track) {
       return res.status(404).json({ message: "Track not found." });
     }
+
     res.status(200).json(track);
   } catch (error) {
     res.status(500).json({ message: "Error retrieving track details." });
@@ -85,7 +97,7 @@ trackrouter.get("/stream/:trackId", async (req, res) => {
   }
 });
 
-
+// Route for getting audio duration of a specific track
 trackrouter.get("/duration/:trackId", async (req, res) => {
   const { trackId } = req.params;
 
@@ -97,6 +109,7 @@ trackrouter.get("/duration/:trackId", async (req, res) => {
     }
 
     const audioFilePath = track.audioFile;
+
     const metadata = await mm.parseFile(audioFilePath);
     const duration = metadata.format.duration;
 
