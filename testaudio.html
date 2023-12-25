@@ -131,7 +131,7 @@
 
         function fetchAudioDuration(trackId, callback) {
             // Fetch the audio duration for the given track ID
-            fetch(`https://musicmixbackend-production.up.railway.app/tracks/duration/${trackId}`)
+            fetch(`https://backend-musicmix-production.up.railway.app/tracks/duration/${trackId}`)
                 .then(response => response.json())
                 .then(data => {
                     const duration = data.duration;
@@ -145,7 +145,8 @@
 
         function playTrack(trackId) {
             // Fetch the audio source URL for the given track ID
-            fetch(`https://musicmixbackend-production.up.railway.app/tracks/stream/${trackId}`)
+            
+            fetch(`https://backend-musicmix-production.up.railway.app/tracks/stream/${trackId}`)
                 .then(response => response.blob())
                 .then(blob => {
                     audio.src = URL.createObjectURL(blob);

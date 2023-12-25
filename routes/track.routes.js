@@ -31,7 +31,7 @@ trackrouter.post("/create", upload.single("audioFile"), async (req, res) => {
 
     const savedTrack = await track.save();
 
-    resstatus(201).json({ message: "Track created successfully", track: savedTrack });
+    res.status(201).json({ message: "Track created successfully", track: savedTrack });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: "Track creation failed. Please try again." });
