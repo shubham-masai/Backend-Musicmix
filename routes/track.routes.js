@@ -85,16 +85,18 @@ trackrouter.get("/stream/:trackId", async (req, res) => {
   }
 });
 
+
 trackrouter.get("/duration/:trackId", async (req, res) => {
   const { trackId } = req.params;
+
   try {
     const track = await Track.findById(trackId);
 
     if (!track) {
       return res.status(404).json({ message: "Track not found." });
     }
-    const audioFilePath = track.audioFile;
 
+    const audioFilePath = track.audioFile;
     const metadata = await mm.parseFile(audioFilePath);
     const duration = metadata.format.duration;
 
