@@ -5,11 +5,10 @@ const multer = require("multer");
 const fs = require("fs");
 const mm = require("music-metadata");
 const rangeParser = require("range-parser");
-const config = require("../config");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, config.UPLOADS_DIRECTORY);
+    cb(null, "uploads/");
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + "-" + file.originalname);
@@ -27,8 +26,7 @@ trackrouter.post("/create", upload.single("audioFile"), async (req, res) => {
       return res.status(400).json({ message: "Audio file is required." });
     }
 
-    // const audioFilePath = req.file.path;
-    const audioFilePath = path.join(config.UPLOADS_DIRECTORY, req.file.filename);
+    const audioFilePath = req.file.path;
 
     const track = new Track({
       title,
@@ -88,8 +86,7 @@ trackrouter.get("/stream/:trackId", async (req, res) => {
       return res.status(404).json({ message: "Track not found." });
     }
 
-    // const audioFilePath = track.audioFile;
-    const audioFilePath = path.join(config.UPLOADS_DIRECTORY, track.audioFile);
+    const audioFilePath = track.audioFile;
 
     res.set("content-type", "audio/mpeg");
 
