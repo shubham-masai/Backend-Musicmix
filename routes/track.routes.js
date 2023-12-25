@@ -1,0 +1,89 @@
+const express = require("express");
+const multer = require("multer");
+const Track = require("../models/track.model")
+const trackrouter = express.Router();
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/");
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + "-" + file.originalname);
+  },
+});
+
+const upload = multer({ storage: storage });
+
+// Route for creating a new track
+trackrouter.post(
+  "/create",
+  upload.single("audioFile"),
+  trackController.createTrack
+);
+
+// Route for getting a list of all tracks
+
+trackrouter.get("/list", async (req, res) => {
+  try {
+    const tracks = await Track.find();
+    res.status(200).json(tracks);
+  } catch (error) {
+    res.status(500).json({ message: "Error retrieving tracks." });
+  }
+});
+
+// Route for getting details of a specific track
+trackrouter.get("/detail/:trackId", async (res, req) => {
+  const { trackId } = req.params;
+  try {
+    const track = await Track.findById(trackId);
+    if (!track) {
+      return res.status(404).json({ message: "Track not found." });
+    }
+    res.status(200).json(track);
+  } catch (error) {
+    res.status(500).json({ message: "Error retrieving track details." });
+  }
+});
+
+// Route for streaming audio of a specific track
+trackrouter.get("/stream/:trackId", async (req, res) => {
+  const { trackId } = req.params;
+
+  try {
+    const track = await Track.findById(trackId);
+
+    if (!track) {
+      return res.status(404).json({ message: "Track not found." });
+    }
+
+    const audioFilePath = track.audioFile;
+
+    res.set("content-type", "audio/mpeg");
+
+    const audioStream = fs.createReadStream(audioFilePath);
+    audioStream.pipe(res);
+  } catch (error) {
+    res.status(500).json({ message: "Error streaming track audio." });
+  }
+});
+
+trackrouter.get("/duration/:trackId", async (req, res) => {
+  const { trackId } = req.params;
+  try {
+    const track = await Track.findById(trackId);
+
+    if (!track) {
+      return res.status(404).json({ message: "Track not found." });
+    }
+    const audioFilePath = track.audioFile;
+
+    const metadata = await mm.parseFile(audioFilePath);
+    const duration = metadata.format.duration;
+
+    res.json({ duration });
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching audio duration." });
+  }
+});
+
+module.exports = trackrouter;

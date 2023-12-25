@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Audio Player</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        #audioContainer {
+            text-align: center;
+        }
+
+        audio {
+            width: 100%;
+            max-width: 400px;
+            margin: 20px 0;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        #customControls {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        #trackIdInput {
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+
+        button {
+            padding: 10px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: #4caf50;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        p {
+            margin: 5px 0;
+            color: #555;
+        }
+
+        #progressBar {
+            margin-top: 20px;
+            height: 10px;
+            background-color: #ddd;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        #currentProgress {
+            height: 100%;
+            width: 0;
+            background-color: #4caf50;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="audioContainer">
+        <audio id="audio" controls style="display: none;"></audio>
+        <div id="customControls">
+            <input type="text" id="trackIdInput" placeholder="Enter Track ID">
+            <button id="playButton">Play</button>
+            <button id="pauseButton">Pause</button>
+            <p>Duration: <span id="duration">Calculating...</span></p>
+            <p>Progress: <span id="progress">0:00</span></p>
+        </div>
+        <div id="progressBar">
+            <div id="currentProgress"></div>
+        </div>
+    </div>
+
+    <script>
+        const audio = document.getElementById('audio');
+        const playButton = document.getElementById('playButton');
+        const pauseButton = document.getElementById('pauseButton');
+        const durationSpan = document.getElementById('duration');
+        const progressSpan = document.getElementById('progress');
+        const progressBar = document.getElementById('progressBar');
+        const currentProgress = document.getElementById('currentProgress');
+        const trackIdInput = document.getElementById('trackIdInput');
+
+        let audioDuration = 0;
+
+        playButton.addEventListener('click', () => {
+            const trackId = trackIdInput.value;
+            if (trackId) {
+                fetchAudioDuration(trackId, (duration) => {
+                    if (duration !== null) {
+                        playTrack(trackId);
+                        audioDuration = duration;
+                        durationSpan.textContent = formatTime(audioDuration);
+                    } else {
+                        console.error('Error fetching audio duration.');
+                    }
+                });
+            }
+        });
+
+        pauseButton.addEventListener('click', () => {
+            audio.pause();
+        });
+
+        audio.addEventListener('timeupdate', () => {
+            const currentTime = audio.currentTime;
+            progressSpan.textContent = formatTime(currentTime);
+            updateProgressBar(currentTime);
+        });
+
+        function fetchAudioDuration(trackId, callback) {
+            // Fetch the audio duration for the given track ID
+            fetch(`https://musicmixbackend-production.up.railway.app/tracks/duration/${trackId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const duration = data.duration;
+                    callback(duration);
+                })
+                .catch(error => {
+                    console.error('Error fetching audio duration:', error);
+                    callback(null);
+                });
+        }
+
+        function playTrack(trackId) {
+            // Fetch the audio source URL for the given track ID
+            fetch(`https://musicmixbackend-production.up.railway.app/tracks/stream/${trackId}`)
+                .then(response => response.blob())
+                .then(blob => {
+                    audio.src = URL.createObjectURL(blob);
+                    audio.play();
+                })
+                .catch(error => {
+                    console.error('Error fetching and playing the track:', error);
+                });
+        }
+
+        function formatTime(seconds) {
+            const minutes = Math.floor(seconds / 60);
+            const remainingSeconds = Math.floor(seconds % 60);
+            const formattedTime = `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`;
+            return formattedTime;
+        }
+
+        function updateProgressBar(currentTime) {
+            const widthPercentage = (currentTime / audioDuration) * 100;
+            currentProgress.style.width = `${widthPercentage}%`;
+        }
+    </script>
+</body>
+</html>
