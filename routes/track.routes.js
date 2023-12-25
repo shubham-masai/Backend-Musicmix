@@ -14,11 +14,29 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // Route for creating a new track
-trackrouter.post(
-  "/create",
-  upload.single("audioFile"),
-  trackController.createTrack
-);
+trackrouter.post("/create", upload.single("audioFile"), async (req, res) => {
+  const { title, artist, album } = req.body;
+
+  try {
+    if (!req.file) {
+      return res.status(400).json({ message: "Audio file is required." });
+    }
+    const audioFilePath = req.file.path;
+    const track = new Track({
+      title,
+      artist,
+      album,
+      audioFile: audioFilePath,
+    });
+
+    const savedTrack = await track.save();
+
+    resstatus(201).json({ message: "Track created successfully", track: savedTrack });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Track creation failed. Please try again." });
+  }
+});
 
 // Route for getting a list of all tracks
 
